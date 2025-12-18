@@ -58,6 +58,11 @@ class InputSimulator:
         Args:
             text (str): The text to type.
         """
+        preview = text.replace("\n", "\\n")
+        if len(preview) > 120:
+            preview = preview[:120] + "…"
+        ConfigManager.console_print(f"Inserting via {self.input_method}: {preview}")
+
         interval = ConfigManager.get_config_value('post_processing', 'writing_key_press_delay')
         if self.input_method == 'pynput':
             self._typewrite_pynput(text, interval)

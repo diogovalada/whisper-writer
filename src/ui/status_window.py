@@ -23,7 +23,11 @@ class StatusWindow(BaseWindow):
         """
         Initialize the status user interface.
         """
+        # Avoid stealing focus from the active application (so typing/pasting goes to the user's
+        # intended target window).
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setAttribute(Qt.WA_ShowWithoutActivating, True)
+        self.setFocusPolicy(Qt.NoFocus)
         
         status_layout = QHBoxLayout()
         status_layout.setContentsMargins(0, 0, 0, 0)
@@ -36,9 +40,11 @@ class StatusWindow(BaseWindow):
         self.pencil_pixmap = QPixmap(pencil_path).scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.icon_label.setPixmap(self.microphone_pixmap)
         self.icon_label.setAlignment(Qt.AlignCenter)
+        self.icon_label.setFocusPolicy(Qt.NoFocus)
 
         self.status_label = QLabel('Recording...')
         self.status_label.setFont(QFont('Segoe UI', 12))
+        self.status_label.setFocusPolicy(Qt.NoFocus)
 
         status_layout.addStretch(1)
         status_layout.addWidget(self.icon_label)

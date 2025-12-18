@@ -53,6 +53,7 @@ class WhisperWriterApp(QObject):
         self.local_model = create_local_model() if not model_options.get('use_api') else None
 
         self.result_thread = None
+        self._stop_continuous_after_current_cycle = False
 
         self.main_window = MainWindow()
         self.main_window.openSettings.connect(self.settings_window.show)
@@ -133,7 +134,10 @@ class WhisperWriterApp(QObject):
             if recording_mode == 'press_to_toggle':
                 self.result_thread.stop_recording()
             elif recording_mode == 'continuous':
-                self.stop_result_thread()
+                # In continuous mode, interpret a second press as "stop after this cycle":
+                # stop recording now (so we still transcribe), then don't auto-restart.
+                self._stop_continuous_after_current_cycle = True
+                self.result_thread.stop_recording()
             return
 
         self.start_result_thread()
@@ -177,6 +181,10 @@ class WhisperWriterApp(QObject):
             AudioPlayer(os.path.join('assets', 'beep.wav')).play(block=True)
 
         if ConfigManager.get_config_value('recording_options', 'recording_mode') == 'continuous':
+            if self._stop_continuous_after_current_cycle:
+                self._stop_continuous_after_current_cycle = False
+                return
+
             self.start_result_thread()
         else:
             self.key_listener.start()
