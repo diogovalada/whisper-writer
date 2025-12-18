@@ -148,11 +148,13 @@ WhisperWriter uses a configuration file to customize its behaviour. To set up th
 - `min_duration`: The minimum duration in milliseconds for a recording to be processed. Recordings shorter than this will be discarded. (Default: `100`)
 
 #### Post-processing Options
-- `writing_key_press_delay`: The delay in seconds between each key press when writing the transcribed text. (Default: `0.005`)
+- `writing_key_press_delay`: (Typing modes only) The delay in seconds between each key press when writing the transcribed text. (Default: `0.005`)
+- `clipboard_paste_delay`: (Clipboard mode only) The delay in seconds after pasting (used before restoring the clipboard). (Default: `0.03`)
+- `restore_clipboard`: (Clipboard mode only) Set to `true` to restore the previous clipboard contents after pasting. (Default: `true`)
 - `remove_trailing_period`: Set to `true` to remove the trailing period from the transcribed text. (Default: `false`)
 - `add_trailing_space`: Set to `true` to add a space to the end of the transcribed text. (Default: `true`)
 - `remove_capitalization`: Set to `true` to convert the transcribed text to lowercase. (Default: `false`)
-- `input_method`: The method to use for simulating keyboard input. (Default: `pynput`)
+- `input_method`: The method to use for inserting the transcribed text. Options include simulating keyboard input: `pynput` (default), `ydotool`, `dotool`; and copy-pasting in the cursor location: `clipboard`.
 
 #### Miscellaneous Options
 - `print_to_terminal`: Set to `true` to print the script status and transcribed text to the terminal. (Default: `true`)
