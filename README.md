@@ -151,6 +151,7 @@ WhisperWriter uses a configuration file to customize its behaviour. To set up th
 - `print_to_terminal`: Set to `true` to print the script status and transcribed text to the terminal. (Default: `true`)
 - `hide_status_window`: Set to `true` to hide the status window during operation. (Default: `false`)
 - `noise_on_completion`: Set to `true` to play a noise after the transcription has been typed out. (Default: `false`)
+- `start_minimized`: Set to `true` to launch WhisperWriter minimized to the system tray with the listener ready to record immediately. (Default: `false`)
 
 If any of the configuration options are invalid or not provided, the program will use the default values.
 
