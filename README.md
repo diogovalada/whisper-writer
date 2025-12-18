@@ -27,7 +27,6 @@ The transcription can either be done locally through the [faster-whisper Python 
 ### Prerequisites
 Before you can run this app, you'll need to have the following software installed:
 
-- Git: [https://git-scm.com/downloads](https://git-scm.com/downloads)
 - Python `3.11`: [https://www.python.org/downloads/](https://www.python.org/downloads/)
 
 If you want to run `faster-whisper` on your GPU, you'll also need to install the following NVIDIA libraries:
@@ -79,19 +78,27 @@ cd whisper-writer
 #### 2. Create a virtual environment and activate it:
 
 ```
-python -m venv venv
+python -m venv .venv
 
 # For Linux and macOS:
-source venv/bin/activate
+source .venv/bin/activate
 
 # For Windows:
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
 #### 3. Install the required packages:
 
+Preferentially, if you have uv:
+
+```bash
+uv sync
 ```
-pip install -r requirements.txt
+
+alternatively (less reproducible),
+
+```
+pip install .
 ```
 
 #### 4. Run the Python code:
