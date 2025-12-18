@@ -3,6 +3,8 @@ import signal
 import subprocess
 import time
 import sys
+import ctypes
+from ctypes import wintypes
 from pynput.keyboard import Controller as PynputController, Key
 
 from utils import ConfigManager
@@ -163,10 +165,14 @@ class InputSimulator:
             self._typewrite_pynput(text, typing_interval)
             return
 
-        modifier_key = Key.cmd if sys.platform == 'darwin' else Key.ctrl
-        with self.keyboard.pressed(modifier_key):
-            self.keyboard.press('v')
-            self.keyboard.release('v')
+        if sys.platform.startswith("win") and self._windows_paste_via_message():
+            ConfigManager.console_print("Clipboard paste: WM_PASTE")
+        else:
+            ConfigManager.console_print("Clipboard paste: hotkey")
+            modifier_key = Key.cmd if sys.platform == 'darwin' else Key.ctrl
+            with self.keyboard.pressed(modifier_key):
+                self.keyboard.press('v')
+                self.keyboard.release('v')
 
         if restore_clipboard and previous_clipboard is not None:
             time.sleep(paste_delay)
@@ -175,6 +181,61 @@ class InputSimulator:
                 pyperclip.copy(previous_clipboard)
             except Exception:
                 pass
+
+    def _windows_paste_via_message(self) -> bool:
+        """
+        Windows-only: try to paste by sending WM_PASTE to the currently focused control.
+
+        This avoids synthetic keystrokes and tends to insert immediately in many native controls.
+        Returns True on best-effort success, False to fall back to hotkey paste.
+        """
+        if not sys.platform.startswith("win"):
+            return False
+
+        try:
+            user32 = ctypes.windll.user32
+
+            class GUITHREADINFO(ctypes.Structure):
+                _fields_ = [
+                    ("cbSize", wintypes.DWORD),
+                    ("flags", wintypes.DWORD),
+                    ("hwndActive", wintypes.HWND),
+                    ("hwndFocus", wintypes.HWND),
+                    ("hwndCapture", wintypes.HWND),
+                    ("hwndMenuOwner", wintypes.HWND),
+                    ("hwndMoveSize", wintypes.HWND),
+                    ("hwndCaret", wintypes.HWND),
+                    ("rcCaret", wintypes.RECT),
+                ]
+
+            GetForegroundWindow = user32.GetForegroundWindow
+            GetWindowThreadProcessId = user32.GetWindowThreadProcessId
+            GetGUIThreadInfo = user32.GetGUIThreadInfo
+            SendMessageW = user32.SendMessageW
+
+            GetForegroundWindow.restype = wintypes.HWND
+            hwnd_foreground = GetForegroundWindow()
+            if not hwnd_foreground:
+                return False
+
+            thread_id = GetWindowThreadProcessId(hwnd_foreground, None)
+            if not thread_id:
+                return False
+
+            info = GUITHREADINFO()
+            info.cbSize = ctypes.sizeof(GUITHREADINFO)
+            if not GetGUIThreadInfo(thread_id, ctypes.byref(info)):
+                return False
+
+            hwnd_target = info.hwndFocus or info.hwndActive
+            if not hwnd_target:
+                return False
+
+            WM_PASTE = 0x0302
+            SendMessageW(hwnd_target, WM_PASTE, 0, 0)
+            return True
+        except Exception:
+            return False
 
     def cleanup(self):
         """
