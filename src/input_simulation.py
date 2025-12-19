@@ -211,19 +211,26 @@ class InputSimulator:
             GetForegroundWindow = user32.GetForegroundWindow
             GetWindowThreadProcessId = user32.GetWindowThreadProcessId
             GetGUIThreadInfo = user32.GetGUIThreadInfo
-            SendMessageW = user32.SendMessageW
+            GetClassNameW = user32.GetClassNameW
+            SendMessageTimeoutW = user32.SendMessageTimeoutW
 
             GetForegroundWindow.restype = wintypes.HWND
             hwnd_foreground = GetForegroundWindow()
             if not hwnd_foreground:
                 return False
 
-            thread_id = GetWindowThreadProcessId(hwnd_foreground, None)
+            process_id = wintypes.DWORD()
+            GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+            GetWindowThreadProcessId.restype = wintypes.DWORD
+
+            thread_id = GetWindowThreadProcessId(hwnd_foreground, ctypes.byref(process_id))
             if not thread_id:
                 return False
 
             info = GUITHREADINFO()
             info.cbSize = ctypes.sizeof(GUITHREADINFO)
+            GetGUIThreadInfo.argtypes = [wintypes.DWORD, ctypes.POINTER(GUITHREADINFO)]
+            GetGUIThreadInfo.restype = wintypes.BOOL
             if not GetGUIThreadInfo(thread_id, ctypes.byref(info)):
                 return False
 
@@ -231,9 +238,41 @@ class InputSimulator:
             if not hwnd_target:
                 return False
 
+            # WM_PASTE works reliably on classic edit controls, but many modern apps don't
+            # handle it (Electron/Chromium, WinUI/XAML, etc). Only use WM_PASTE for
+            # well-known controls; otherwise fall back to Ctrl+V.
+            class_name_buf = ctypes.create_unicode_buffer(256)
+            GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+            GetClassNameW.restype = ctypes.c_int
+            if GetClassNameW(hwnd_target, class_name_buf, len(class_name_buf)) == 0:
+                return False
+
+            wm_paste_classes = {
+                "edit",
+                "richedit20a",
+                "richedit20w",
+                "richedit50a",
+                "richedit50w",
+            }
+            if class_name_buf.value.casefold() not in wm_paste_classes:
+                return False
+
             WM_PASTE = 0x0302
-            SendMessageW(hwnd_target, WM_PASTE, 0, 0)
-            return True
+            SMTO_ABORTIFHUNG = 0x0002
+            DWORD_PTR = ctypes.c_size_t
+            result = DWORD_PTR()
+            SendMessageTimeoutW.argtypes = [
+                wintypes.HWND,
+                wintypes.UINT,
+                wintypes.WPARAM,
+                wintypes.LPARAM,
+                wintypes.UINT,
+                wintypes.UINT,
+                ctypes.POINTER(DWORD_PTR),
+            ]
+            SendMessageTimeoutW.restype = DWORD_PTR
+            ok = SendMessageTimeoutW(hwnd_target, WM_PASTE, 0, 0, SMTO_ABORTIFHUNG, 100, ctypes.byref(result))
+            return bool(ok)
         except Exception:
             return False
 
