@@ -2,6 +2,16 @@
 
 ![version](https://img.shields.io/badge/version-1.0.1-blue)
 
+## Fork Notice (diogovalada)
+
+This repository is a fork of the upstream project: https://github.com/savbell/whisper-writer
+
+Notable changes in this fork:
+- Fixes installation issues (environment/dependency setup).
+- Fixes a handful of small bugs and usability issues.
+- Adds clipboard copy/paste insertion (in addition to keystroke typing).
+- Enables optional audio compression (MP3) before remote API upload to reduce upload size/latency.
+
 <p align="center">
     <img src="./assets/ww-demo-image-02.gif" alt="WhisperWriter demo gif" width="340" height="136">
 </p>
