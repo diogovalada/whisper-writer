@@ -86,6 +86,12 @@ class StatusWindow(BaseWindow):
             self.icon_label.setPixmap(self.microphone_pixmap)
             self.status_label.setText('Recording...')
             self.show()
+        elif status == 'encoding':
+            self.icon_label.setPixmap(self.pencil_pixmap)
+            self.status_label.setText('Encoding...')
+        elif status == 'uploading':
+            self.icon_label.setPixmap(self.pencil_pixmap)
+            self.status_label.setText('Uploading...')
         elif status == 'transcribing':
             self.icon_label.setPixmap(self.pencil_pixmap)
             self.status_label.setText('Transcribing...')

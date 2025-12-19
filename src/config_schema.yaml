@@ -34,6 +34,17 @@ model_options:
       value: null
       type: str
       description: "Your API key for the OpenAI API. Required for non-local API usage."
+    upload_format:
+      value: wav
+      type: str
+      description: "Audio format to upload to remote providers. Choose mp3 to reduce upload size. This only applies when using the OpenAI API; local transcriptions always use WAV."
+      options:
+        - wav
+        - mp3
+    mp3_quality:
+      value: 2
+      type: int
+      description: "MP3 encoding effort (0 = best quality/slowest, 9 = fastest/smallest). Only used for remote uploads when format is mp3; audio stays mono at the configured sample rate."
 
   # Configuration options for the faster-whisper model
   local:

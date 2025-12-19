@@ -80,15 +80,35 @@ class ResultThread(QThread):
                 self.statusSignal.emit('idle')
                 return
 
-            self.statusSignal.emit('transcribing')
-            ConfigManager.console_print('Transcribing...')
-
             # Time the transcription process
-            start_time = time.time()
-            result = transcribe(audio_data, self.local_model)
-            end_time = time.time()
+            phase_started = {}
+
+            def emit_status(status: str):
+                # Record the first time we enter each phase, so we can print a breakdown later.
+                if status not in phase_started:
+                    phase_started[status] = time.perf_counter()
+                self.statusSignal.emit(status)
+
+            start_time = time.perf_counter()
+            result = transcribe(audio_data, self.local_model, status_callback=emit_status)
+            end_time = time.perf_counter()
 
             transcription_time = end_time - start_time
+
+            # Print phase times if available.
+            if 'encoding' in phase_started and 'uploading' in phase_started:
+                ConfigManager.console_print(
+                    f"Encoding time: {phase_started['uploading'] - phase_started['encoding']:.3f} seconds"
+                )
+            if 'uploading' in phase_started and 'transcribing' in phase_started:
+                ConfigManager.console_print(
+                    f"Uploading time: {phase_started['transcribing'] - phase_started['uploading']:.3f} seconds"
+                )
+            if 'transcribing' in phase_started:
+                ConfigManager.console_print(
+                    f"Transcribing time: {end_time - phase_started['transcribing']:.3f} seconds"
+                )
+
             ConfigManager.console_print(f'Transcription completed in {transcription_time:.2f} seconds. Post-processed line: {result}')
 
             if not self.is_running:
