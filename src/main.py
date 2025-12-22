@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-from audioplayer import AudioPlayer
 from pynput.keyboard import Controller
 from PyQt5.QtCore import QObject, QProcess
 from PyQt5.QtGui import QIcon
@@ -9,6 +8,7 @@ from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QMess
 
 from key_listener import KeyListener
 from result_thread import ResultThread
+from sound_player import SoundPlayer
 from ui.main_window import MainWindow
 from ui.settings_window import SettingsWindow
 from ui.status_window import StatusWindow
@@ -25,6 +25,7 @@ class WhisperWriterApp(QObject):
         super().__init__()
         self.app = QApplication(sys.argv)
         self.app.setWindowIcon(QIcon(os.path.join('assets', 'ww-logo.png')))
+        self.sound_player = SoundPlayer()
 
         ConfigManager.initialize()
 
@@ -178,7 +179,9 @@ class WhisperWriterApp(QObject):
         self.input_simulator.typewrite(result)
 
         if ConfigManager.get_config_value('misc', 'noise_on_completion'):
-            AudioPlayer(os.path.join('assets', 'beep.wav')).play(block=True)
+            beep_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'beep.wav')
+            self.sound_player.play(beep_path)
+
 
         if ConfigManager.get_config_value('recording_options', 'recording_mode') == 'continuous':
             if self._stop_continuous_after_current_cycle:
